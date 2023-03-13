@@ -1,28 +1,39 @@
 using Microsoft.AspNetCore.Mvc;
+using OwlreportAPI.Data;
+using OwlreportAPI.Models;
 
 [Route("api/[controller]")]
 [ApiController]
 public class AuthController : ControllerBase
 {
+    //inject context
+    private readonly DataContext _dataContext;
+    public AuthController(DataContext context)
+    {
+        _dataContext = context;
+    }
+
     [HttpPost("Login")]
     public IActionResult Login([FromBody] LoginModel model)
     {
-        if (IsValidUser(model.Username, model.Password))
+        User user = new User()
         {
-            // Authentication successful
-            return Ok(new { message = "Authentication successful" });
-        }
-        else
-        {
-            // Authentication failed
-            return Unauthorized(new { message = "Invalid username or password" });
-        }
-    }
+            Username = model.Username,
+            Password = model.Password
+        };
 
-    private bool IsValidUser(string username, string password)
-    {
-        // TODO: Retrieve the credentials from a secure source
-        return username == "username" && password == "password";
+        //Checking for matching user credentials
+        var foundUser = _dataContext
+            .Users
+            .Where(dbUser => dbUser.Username == user.Username && dbUser.Password == user.Password)
+            .SingleOrDefault();
+
+        if (foundUser is null)
+        {
+            return BadRequest(new { message = "Fel Användarnamn eller Lösenord" });
+        }
+        return Ok();
+
     }
 }
 
