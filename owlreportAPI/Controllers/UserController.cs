@@ -19,12 +19,7 @@ namespace OwlreportAPI.Controllers
 
         [HttpGet("{userSecretKey}")]
         public async Task<ActionResult<List<User>>> Get(string userSecretKey)
-        {
-            if(userSecretKey.Length != 64)
-            {
-                return BadRequest("Secret key has to be 64 chars long");
-            }
-
+        {            
             var foundUser = FindUserWithSecretKey(userSecretKey);
             
             if(foundUser == null)
@@ -46,6 +41,11 @@ namespace OwlreportAPI.Controllers
             .Users
             .Where(dbUser => dbUser.SecretKey == userSecretKey)
             .SingleOrDefault();
+
+            if(userSecretKey.Length != 64)
+            {
+                foundUser = null;
+            }
 
             return foundUser;
         }
