@@ -37,7 +37,6 @@ namespace OwlreportAPI.Controllers
             {
                 return Ok(project);
             }
-
         }
 
         [HttpPost]

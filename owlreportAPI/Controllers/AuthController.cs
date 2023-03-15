@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OwlreportAPI.Data;
 using OwlreportAPI.Models;
+using System.Diagnostics.Metrics;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -32,8 +34,34 @@ public class AuthController : ControllerBase
         {
             return BadRequest(new { message = "Fel Användarnamn eller Lösenord" });
         }
-        return Ok();
 
+        //Generate new secret key for the user
+        foundUser.SecretKey = SecretKeyGen();
+        _dataContext.Update(foundUser);
+        _dataContext.SaveChangesAsync();
+
+        return Ok(new { 
+            username = foundUser.Username,
+            fName = foundUser.FName,
+            lName = foundUser.LName,
+            secretKey = foundUser.SecretKey
+        });      
+    }
+
+    string SecretKeyGen()
+    {
+        string str = "";
+        int randValue;
+        char letter;
+        Random rand = new Random();
+
+        for (int i = 0; i < 64; i++)
+        {
+            randValue = rand.Next(0, 26);
+            letter = Convert.ToChar(randValue + 65);
+            str = str + letter;
+        }
+        return str;
     }
 }
 
@@ -42,4 +70,5 @@ public class LoginModel
     public string Username { get; set; }
     public string Password { get; set; }
 }
+
 
