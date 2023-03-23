@@ -13,5 +13,6 @@ namespace OwlreportAPI.Data
         public DbSet<TimeReport> TimeReports => Set<TimeReport>();
         public DbSet<Project> Projects => Set<Project>();
         public DbSet<User> Users => Set<User>();
+        public DbSet<ProjectUserRelation> ProjectUserRelations => Set<ProjectUserRelation>();
     }
 }

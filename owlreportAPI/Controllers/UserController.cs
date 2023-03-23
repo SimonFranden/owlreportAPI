@@ -35,7 +35,40 @@ namespace OwlreportAPI.Controllers
             });
         }
 
-        User FindUserWithSecretKey(string userSecretKey)
+        [HttpGet("UserProjects")]
+        public async Task<ActionResult<List<User>>> GetUserProjects(string userSecretKey)
+        {
+            var foundUser = FindUserWithSecretKey(userSecretKey);
+
+            if (foundUser == null)
+            {
+                return BadRequest("User not found");
+            }
+
+            var projectUserRelations = _context
+                .ProjectUserRelations
+                .Where(dbProjectUserRelation => dbProjectUserRelation.UserId == foundUser.Id).ToList();
+
+            List<object> UserProjects = new();
+            foreach(ProjectUserRelation item in projectUserRelations)
+            {
+                var project = _context
+                    .Projects
+                    .Where(dbProject => dbProject.ProjectId == item.ProjectId)
+                    .SingleOrDefault();
+
+                UserProjects.Add(new
+                {
+                    projectId = project.ProjectId,
+                    projectName = project.ProjectName,
+                    isActive = item.Active
+                });
+            }
+
+            return Ok(UserProjects);
+        }
+
+            User FindUserWithSecretKey(string userSecretKey)
         {
             var foundUser = _context
             .Users
