@@ -35,7 +35,7 @@ namespace OwlreportAPI.Controllers
             });
         }
 
-        [HttpGet("UserProjects")]
+        [HttpGet("UserProjects/{userSecretKey}")]
         public async Task<ActionResult<List<User>>> GetUserProjects(string userSecretKey)
         {
             var foundUser = FindUserWithSecretKey(userSecretKey);
