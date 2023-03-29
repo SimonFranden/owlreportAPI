@@ -31,5 +31,20 @@ namespace OwlreportAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok("time report added");
         }
-    }
+
+        [HttpGet("total-hours")]
+        public async Task<ActionResult<IEnumerable<object>>> GetTotalHours()
+        {
+            var projects = await _context.Projects.ToListAsync();
+
+            var result = projects.Select(p => new
+            {
+                ProjectName = p.ProjectName,
+                TotalHours = _context.TimeReports.Where(t => t.ProjectId == p.ProjectId).Sum(t => t.HoursWorked)
+            }).ToList();
+
+            return Ok(result);
+        }
+    
+}
 }
