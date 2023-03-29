@@ -68,7 +68,26 @@ namespace OwlreportAPI.Controllers
             return Ok(UserProjects);
         }
 
-            User FindUserWithSecretKey(string userSecretKey)
+        [HttpPost("CreateProject")]
+        public async Task<ActionResult<List<TimeReport>>> AddReport(CreateProjectModel createProjectModel)
+        {
+            var foundUser = FindUserWithSecretKey(createProjectModel.userSecretKey);
+            if (foundUser == null)
+            {
+                return BadRequest("User not found");
+            }
+
+            Project createdProject = new();
+            createdProject.ProjectName = createProjectModel.ProjectName;
+            createdProject.ProjectLength = createProjectModel.ProjectLength;
+            createdProject.ProjectOwner = foundUser.Id;
+
+            _context.Projects.Add(createdProject);
+            await _context.SaveChangesAsync();
+            return Ok("project added");
+        }
+
+        User FindUserWithSecretKey(string userSecretKey)
         {
             var foundUser = _context
             .Users

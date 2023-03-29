@@ -38,13 +38,6 @@ namespace OwlreportAPI.Controllers
                 return Ok(project);
             }
         }
-
-        [HttpPost]
-        public async Task<ActionResult<List<TimeReport>>> AddReport(Project project)
-        {
-            _context.Projects.Add(project);
-            await _context.SaveChangesAsync();
-            return Ok("project added");
-        }
+       
     }
 }
