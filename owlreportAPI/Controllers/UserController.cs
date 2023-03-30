@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OwlreportAPI.Data;
 using OwlreportAPI.Migrations;
 using OwlreportAPI.Models;
@@ -15,6 +16,27 @@ namespace OwlreportAPI.Controllers
         public UserController(DataContext context)
         {
             _context = context;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<User>>> Get()
+        {
+            List<User> userList = new();
+            userList = await _context.Users.ToListAsync();
+
+            List<PublicUserInfo> publicUserInfoList = new();
+            foreach(User user in userList)
+            {
+                PublicUserInfo newPublicUserInfo = new();
+                newPublicUserInfo.Id = user.Id;
+                newPublicUserInfo.Username = user.Username;
+                newPublicUserInfo.FName = user.FName;
+                newPublicUserInfo.LName = user.LName;
+
+                publicUserInfoList.Add(newPublicUserInfo);
+            }
+
+            return Ok(publicUserInfoList);
         }
 
         [HttpGet("{userSecretKey}")]
@@ -69,9 +91,9 @@ namespace OwlreportAPI.Controllers
         }
 
         [HttpPost("CreateProject")]
-        public async Task<ActionResult<List<TimeReport>>> AddReport(CreateProjectModel createProjectModel)
+        public async Task<ActionResult<List<User>>> CreateProject(CreateProjectModel createProjectModel)
         {
-            var foundUser = FindUserWithSecretKey(createProjectModel.userSecretKey);
+            var foundUser = FindUserWithSecretKey(createProjectModel.UserSecretKey);
             if (foundUser == null)
             {
                 return BadRequest("User not found");
@@ -84,10 +106,49 @@ namespace OwlreportAPI.Controllers
 
             _context.Projects.Add(createdProject);
             await _context.SaveChangesAsync();
+
+            ProjectUserRelation newRelation = new();
+            newRelation.ProjectId = _context
+            .Projects
+            .Where(dbProject => dbProject.ProjectName == createdProject.ProjectName)
+            .SingleOrDefault().ProjectId;
+
+            newRelation.UserId = foundUser.Id;
+            newRelation.Active = true;
+
+            _context.ProjectUserRelations.Add(newRelation);
+            await _context.SaveChangesAsync();
             return Ok("project added");
         }
 
-        User FindUserWithSecretKey(string userSecretKey)
+
+
+        [HttpPost("AddUsersToProject")]
+        public async Task<ActionResult<List<User>>> AddUsersToProject(AddUsers relationsToAdd)
+        {
+            var foundUser = FindUserWithSecretKey(relationsToAdd.UserSecretKey);
+            if (foundUser == null)
+            {
+                return BadRequest("User not found");
+            }
+
+            foreach(UserToAdd relationToAdd in relationsToAdd.UserList)
+            {
+                ProjectUserRelation newRelation = new();
+                newRelation.ProjectId = relationToAdd.ProjectId;
+                newRelation.UserId = relationToAdd.UserId;
+                newRelation.Active = true;
+
+                _context.ProjectUserRelations.Add(newRelation);
+                await _context.SaveChangesAsync();
+                
+            }
+            return Ok("Users added");
+        }
+
+
+
+            User FindUserWithSecretKey(string userSecretKey)
         {
             var foundUser = _context
             .Users

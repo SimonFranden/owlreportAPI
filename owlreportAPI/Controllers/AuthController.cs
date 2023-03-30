@@ -41,6 +41,7 @@ public class AuthController : ControllerBase
         _dataContext.SaveChangesAsync();
 
         return Ok(new { 
+            userId = foundUser.Id,
             username = foundUser.Username,
             fName = foundUser.FName,
             lName = foundUser.LName,

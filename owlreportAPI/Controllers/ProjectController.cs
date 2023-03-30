@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using OwlreportAPI.Data;
 using OwlreportAPI.Models;
 
@@ -18,11 +19,50 @@ namespace OwlreportAPI.Controllers
             _context = context;
         }
 
-
-        [HttpGet]
-        public async Task<ActionResult<List<Project>>> Get()
+        
+        List<PublicUserInfo> GetProjectMemebers(int projectId)
         {
-            return Ok(await _context.Projects.ToListAsync());
+            List<ProjectUserRelation> projectUserRelationList = _context
+                .ProjectUserRelations
+                .Where(pur => pur.ProjectId == projectId)
+                .ToList();
+
+            List<PublicUserInfo> users = new();
+            foreach(ProjectUserRelation pur in projectUserRelationList)
+            {
+                User foundUser = _context
+                    .Users
+                    .Where(user => user.Id == pur.UserId)
+                    .SingleOrDefault();
+
+                PublicUserInfo projectMember = new();
+                projectMember.Id = foundUser.Id;
+                projectMember.Username = foundUser.Username;
+                projectMember.FName = foundUser.FName;
+                projectMember.LName = foundUser.LName;
+
+                users.Add(projectMember);
+            }
+            return users;
+        }
+
+        [HttpGet("ProjectsInfo")]
+        public async Task<ActionResult<IEnumerable<object>>> GetTotalHours()
+        {
+            var projects = await _context.Projects.ToListAsync();
+
+            var result = projects.Select(p => new
+            {
+                ProjectId = p.ProjectId,
+                ProjectOwner = p.ProjectOwner,
+                ProjectName = p.ProjectName,
+                ProjectLength = p.ProjectLength,
+                TotalHours = _context.TimeReports.Where(t => t.ProjectId == p.ProjectId).Sum(t => t.HoursWorked),
+                ProjectMembers = GetProjectMemebers(p.ProjectId)
+                }).ToList();
+                    
+
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
