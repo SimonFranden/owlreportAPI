@@ -118,37 +118,75 @@ namespace OwlreportAPI.Controllers
 
             _context.ProjectUserRelations.Add(newRelation);
             await _context.SaveChangesAsync();
-            return Ok("project added");
+            return Ok("Project Created");
         }
 
-
-
-        [HttpPost("AddUsersToProject")]
-        public async Task<ActionResult<List<User>>> AddUsersToProject(AddUsers relationsToAdd)
+        [HttpPost("EditProject")]
+        public async Task<ActionResult<List<User>>> EditProject(EditProjectModel projectUpdates)
         {
-            var foundUser = FindUserWithSecretKey(relationsToAdd.UserSecretKey);
+            var foundUser = FindUserWithSecretKey(projectUpdates.UserSecretKey);
             if (foundUser == null)
             {
                 return BadRequest("User not found");
             }
 
-            foreach(UserToAdd relationToAdd in relationsToAdd.UserList)
+            var projectToUpdate = _context.Projects.FirstOrDefault(e => e.ProjectId == projectUpdates.ProjectId);
+
+            if (projectToUpdate == null || projectToUpdate.ProjectOwner != foundUser.Id) return BadRequest("Something went wrong");
+         
+            projectToUpdate.ProjectName = projectUpdates.ProjectName;
+            projectToUpdate.ProjectLength = projectUpdates.ProjectLength;
+
+            await _context.SaveChangesAsync();
+            return Ok($"Project{projectToUpdate.ProjectName} updated");
+        }
+
+
+        [HttpPost("AddUsersToProject")]
+        public async Task<ActionResult<List<User>>> AddUsersToProject(EditUsers relationsToAdd)
+        {
+            var foundUser = FindUserWithSecretKey(relationsToAdd.UserSecretKey);
+
+            if (foundUser == null ) return BadRequest("User not found");
+
+            foreach(UserToEdit relationToAdd in relationsToAdd.UserList)
             {
+                var projectToValidate = _context.Projects.FirstOrDefault(e => e.ProjectId == relationToAdd.ProjectId);
+                if (projectToValidate.ProjectOwner != foundUser.Id) return BadRequest("User is not the project owner!");
+
                 ProjectUserRelation newRelation = new();
                 newRelation.ProjectId = relationToAdd.ProjectId;
                 newRelation.UserId = relationToAdd.UserId;
                 newRelation.Active = true;
 
                 _context.ProjectUserRelations.Add(newRelation);
-                await _context.SaveChangesAsync();
-                
+                await _context.SaveChangesAsync();               
             }
             return Ok("Users added");
         }
 
+        [HttpPost("RemoveUsersToProject")]
+        public async Task<ActionResult<List<User>>> RemoveUsersToProject(EditUsers relationsToRemove)
+        {
+            var foundUser = FindUserWithSecretKey(relationsToRemove.UserSecretKey);
+            if (foundUser == null) return BadRequest("User not found");
+
+            foreach (UserToEdit relationToRemove in relationsToRemove.UserList)
+            {
+                var projectToValidate = _context.Projects.FirstOrDefault(e => e.ProjectId == relationToRemove.ProjectId);
+                if (projectToValidate.ProjectOwner != foundUser.Id) return BadRequest("User is not the project owner!");
+
+                var theRelationToRemove = _context.ProjectUserRelations.FirstOrDefault(e => e.ProjectId == relationToRemove.ProjectId && e.UserId == relationToRemove.UserId);
+
+                _context.ProjectUserRelations.Remove(theRelationToRemove);
+                await _context.SaveChangesAsync();
+
+            }
+            return Ok("Users Removed");
+        }
 
 
-            User FindUserWithSecretKey(string userSecretKey)
+        User FindUserWithSecretKey(string userSecretKey)
         {
             var foundUser = _context
             .Users

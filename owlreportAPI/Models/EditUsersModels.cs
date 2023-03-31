@@ -1,15 +1,16 @@
 ﻿namespace OwlreportAPI.Models
 {
-    public class UserToAdd
+    public class UserToEdit
     {
         public int UserId { get; set; }
         public int ProjectId { get; set; }        
     }
 
-    public class AddUsers
+    public class EditUsers
     {
         public string UserSecretKey { get; set; }
-        public List<UserToAdd> UserList { get; set; }
+        public List<UserToEdit> UserList { get; set; }
     }
+
 
 }
