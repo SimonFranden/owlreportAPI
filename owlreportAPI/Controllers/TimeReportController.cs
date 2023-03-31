@@ -19,9 +19,19 @@ namespace OwlreportAPI.Controllers
 
 
         [HttpGet]
-        public async Task<ActionResult<List<TimeReport>>> Get()
+        public async Task<ActionResult<List<object>>> Get()
         {
-            return Ok(await _context.TimeReports.ToListAsync());
+            var timereports = await _context.TimeReports.ToListAsync();
+            var result = timereports.Select(p => new  {
+                 TimeReportId=p.TimeReportId,
+                 ProjectId=p.ProjectId,
+                 UserName=p.UserName,
+                 Comment=p.Comment,
+                 Date=p.Date,
+                 HoursWorked=p.HoursWorked,
+                 ProjectName= _context.Projects.Where(t => t.ProjectId == p.ProjectId).FirstOrDefault().ProjectName,
+            }).ToList();
+            return Ok(result);
         }
 
         [HttpPost]
