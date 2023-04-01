@@ -7,11 +7,14 @@ Due to this being the backbone of the https://github.com/SimonFranden/owlreport
 then this needs to be running for the webpage to be functioning
 
 Installation:
+----
 Clone this Repo.
 
 Next Run the program either in a Exe file or through the Debugging mode in you code editor it is a self contained backend.
 
 
+Api Controllers
+---
 AuthController : is resposible for login requests and all other things that requires authorization,
 via usernames and other credentials + secrect key that is generated (to keep track of users more easily and their level of access).
 
