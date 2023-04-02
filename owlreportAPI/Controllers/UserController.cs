@@ -25,7 +25,7 @@ namespace OwlreportAPI.Controllers
             userList = await _context.Users.ToListAsync();
 
             List<PublicUserInfo> publicUserInfoList = new();
-            foreach(User user in userList)
+            foreach (User user in userList)
             {
                 PublicUserInfo newPublicUserInfo = new();
                 newPublicUserInfo.Id = user.Id;
@@ -41,10 +41,10 @@ namespace OwlreportAPI.Controllers
 
         [HttpGet("{userSecretKey}")]
         public async Task<ActionResult<List<User>>> Get(string userSecretKey)
-        {            
+        {
             var foundUser = FindUserWithSecretKey(userSecretKey);
-            
-            if(foundUser == null)
+
+            if (foundUser == null)
             {
                 return BadRequest("User not found");
             }
@@ -72,19 +72,24 @@ namespace OwlreportAPI.Controllers
                 .Where(dbProjectUserRelation => dbProjectUserRelation.UserId == foundUser.Id).ToList();
 
             List<object> UserProjects = new();
-            foreach(ProjectUserRelation item in projectUserRelations)
+            foreach (ProjectUserRelation item in projectUserRelations)
             {
                 var project = _context
                     .Projects
                     .Where(dbProject => dbProject.ProjectId == item.ProjectId)
                     .SingleOrDefault();
 
-                UserProjects.Add(new
+                if (project != null)
                 {
-                    projectId = project.ProjectId,
-                    projectName = project.ProjectName,
-                    isActive = item.Active
-                });
+                    UserProjects.Add(new
+                    {
+                        projectId = project.ProjectId,
+                        projectName = project.ProjectName,
+                        isActive = item.Active
+                    });
+                }
+
+
             }
 
             return Ok(UserProjects);
@@ -133,12 +138,30 @@ namespace OwlreportAPI.Controllers
             var projectToUpdate = _context.Projects.FirstOrDefault(e => e.ProjectId == projectUpdates.ProjectId);
 
             if (projectToUpdate == null || projectToUpdate.ProjectOwner != foundUser.Id) return BadRequest("Something went wrong");
-         
+
             projectToUpdate.ProjectName = projectUpdates.ProjectName;
             projectToUpdate.ProjectLength = projectUpdates.ProjectLength;
 
             await _context.SaveChangesAsync();
             return Ok($"Project{projectToUpdate.ProjectName} updated");
+        }
+
+        [HttpPost("DeleteProject")]
+        public async Task<ActionResult<List<User>>> DeleteProject(DeleteProjectModel projectInfo)
+        {
+            var foundUser = FindUserWithSecretKey(projectInfo.UserSecretKey);
+            if (foundUser == null)
+            {
+                return BadRequest("User not found");
+            }
+
+            var projectToDelete = _context.Projects.FirstOrDefault(e => e.ProjectId == projectInfo.ProjectId);
+            if (projectToDelete.ProjectOwner != foundUser.Id) return BadRequest("User is not the project owner!");
+
+            _context.Projects.Remove(projectToDelete);
+            await _context.SaveChangesAsync();
+            return Ok("Project deleted");
+
         }
 
 
@@ -147,9 +170,9 @@ namespace OwlreportAPI.Controllers
         {
             var foundUser = FindUserWithSecretKey(relationsToAdd.UserSecretKey);
 
-            if (foundUser == null ) return BadRequest("User not found");
+            if (foundUser == null) return BadRequest("User not found");
 
-            foreach(UserToEdit relationToAdd in relationsToAdd.UserList)
+            foreach (UserToEdit relationToAdd in relationsToAdd.UserList)
             {
                 var projectToValidate = _context.Projects.FirstOrDefault(e => e.ProjectId == relationToAdd.ProjectId);
                 if (projectToValidate.ProjectOwner != foundUser.Id) return BadRequest("User is not the project owner!");
@@ -160,7 +183,7 @@ namespace OwlreportAPI.Controllers
                 newRelation.Active = true;
 
                 _context.ProjectUserRelations.Add(newRelation);
-                await _context.SaveChangesAsync();               
+                await _context.SaveChangesAsync();
             }
             return Ok("Users added");
         }
@@ -193,7 +216,7 @@ namespace OwlreportAPI.Controllers
             .Where(dbUser => dbUser.SecretKey == userSecretKey)
             .SingleOrDefault();
 
-            if(userSecretKey.Length != 64)
+            if (userSecretKey.Length != 64)
             {
                 foundUser = null;
             }
