@@ -15,10 +15,4 @@
         public int ProjectLength { get; set; }
         public string UserSecretKey { get; set; }
     }
-
-    public class DeleteProjectModel
-    {
-        public int ProjectId { get; set; }
-        public string UserSecretKey { get; set; }
-    }
 }
