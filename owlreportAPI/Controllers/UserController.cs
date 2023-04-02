@@ -79,12 +79,17 @@ namespace OwlreportAPI.Controllers
                     .Where(dbProject => dbProject.ProjectId == item.ProjectId)
                     .SingleOrDefault();
 
-                UserProjects.Add(new
+                if(project != null)
                 {
-                    projectId = project.ProjectId,
-                    projectName = project.ProjectName,
-                    isActive = item.Active
-                });
+                    UserProjects.Add(new
+                    {
+                        projectId = project.ProjectId,
+                        projectName = project.ProjectName,
+                        isActive = item.Active
+                    });
+                }
+
+               
             }
 
             return Ok(UserProjects);
@@ -140,9 +145,26 @@ namespace OwlreportAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok($"Project{projectToUpdate.ProjectName} updated");
         }
+        [HttpPost("DeleteProject")]
+        public async Task<ActionResult<List<User>>> DeleteProject(DeleteProjectModel projectInfo)
+        {
+            var foundUser = FindUserWithSecretKey(projectInfo.UserSecretKey);
+            if (foundUser == null)
+            {
+                return BadRequest("User not found");
+            }
+
+            var projectToDelete = _context.Projects.FirstOrDefault(e => e.ProjectId == projectInfo.ProjectId);
+            if (projectToDelete.ProjectOwner != foundUser.Id) return BadRequest("User is not the project owner!");
+
+            _context.Projects.Remove(projectToDelete);
+            await _context.SaveChangesAsync();
+            return Ok("Project deleted");
+
+        }
 
 
-        [HttpPost("AddUsersToProject")]
+            [HttpPost("AddUsersToProject")]
         public async Task<ActionResult<List<User>>> AddUsersToProject(EditUsers relationsToAdd)
         {
             var foundUser = FindUserWithSecretKey(relationsToAdd.UserSecretKey);
