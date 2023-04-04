@@ -159,6 +159,7 @@ namespace OwlreportAPI.Controllers
             if (projectToDelete.ProjectOwner != foundUser.Id) return BadRequest("User is not the project owner!");
 
             _context.Projects.Remove(projectToDelete);
+            _context.TimeReports.RemoveRange(_context.TimeReports.Where(tr => tr.ProjectId == projectToDelete.ProjectId));
             await _context.SaveChangesAsync();
             return Ok("Project deleted");
 

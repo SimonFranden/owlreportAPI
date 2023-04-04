@@ -22,8 +22,6 @@ namespace OwlreportAPI.Controllers
         public async Task<ActionResult<List<object>>> Get()
         {
             var timereports = await _context.TimeReports.ToListAsync();
-
-
             var result = timereports.Select(p => new  {
                  TimeReportId=p.TimeReportId,
                  ProjectId=p.ProjectId,
@@ -31,7 +29,7 @@ namespace OwlreportAPI.Controllers
                  Comment=p.Comment,
                  Date=p.Date,
                  HoursWorked=p.HoursWorked,
-                 ProjectName= "Project Name"//_context.Projects.Where(t => t.ProjectId == p.ProjectId).FirstOrDefault().ProjectName,
+                 ProjectName= _context.Projects.Where(t => t.ProjectId == p.ProjectId).FirstOrDefault().ProjectName
             }).ToList();
             return Ok(result);
         }
